@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Switch } from "react-router-dom";
+import { Route as ReactRoute, Switch } from "react-router-dom";
 
 // Inspiration from:
 // https://medium.com/better-programming/react-router-architecture-thats-simple-scalable-and-protected-da896827f946
@@ -12,23 +12,11 @@ import { Route, Switch } from "react-router-dom";
  * https://reacttraining.com/react-router/web/example/route-config
  */
 const RouteWithSubRoutes = (route) => (
-  <Route
+  <ReactRoute
     path={route.path}
     exact={route.exact}
     render={(props) => <route.component {...props} routes={route.routes} />}
   />
-);
-
-/**
- * Use this component for any new section of routes (any config object that has a "routes" property)
- */
-const RenderRoutes = ({ routes }) => (
-  <Switch>
-    {routes.map((route) => {
-      return <RouteWithSubRoutes key={route.key} {...route} />;
-    })}
-    <Route component={() => <h1>Not Found!</h1>} />
-  </Switch>
 );
 
 interface Route {
@@ -51,14 +39,21 @@ export const createRoute = <T extends RouteArray>(routes: T, notFoundElement?: R
       {routes.map((route) => (
         <RouteWithSubRoutes route={route} />
       ))}
-      <Route component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>} />
+      <ReactRoute component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>} />
     </Switch>
   );
 
   type Routes = typeof routes[number];
   type RoutesKeys = Routes["key"];
 
-  const createPath = (route: RoutesKeys) => {
+  type ExtractRoutesParameters<A, T> = A extends { key: T } ? A : never;
+  type ExtractRouteOptions<A> = A extends { options: any } ? A["options"] : never;
+  type ArgumentsType<T extends (...args: any[]) => any> = T extends (...args: infer A) => any ? A : never;
+
+  const createPath = <T extends RoutesKeys>(
+    route: T,
+    options: Parameters<ExtractRouteOptions<ExtractRoutesParameters<Routes, T>>>[0],
+  ) => {
     console.log("createPath, route: ", route);
   };
 
@@ -66,8 +61,13 @@ export const createRoute = <T extends RouteArray>(routes: T, notFoundElement?: R
 };
 
 const r = createRoute([
-  { key: "RAMBO", path: "/rambo", component: () => <b>Rambo</b> },
+  {
+    key: "RAMBO",
+    path: "/rambo",
+    component: () => <b>Rambo</b>,
+    options: (_: { id: number; opened?: boolean }) => null,
+  },
   { key: "RAMBOS", path: "/rambos", component: () => <b>Rambos</b> },
 ] as const);
 
-r.createPath("");
+r.createPath("RAMBO", { id: 18 });
