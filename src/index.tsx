@@ -31,35 +31,29 @@ const RenderRoutes = ({ routes }) => (
   </Switch>
 );
 
+interface Route {
+  path: string;
+  key: string;
+  exact?: boolean;
+  component: React.FC;
+  routes?: Route[];
+}
+type RouteArray = readonly Route[];
+
 /**
  * Create router object.
  * @param routes
  * @param notFoundElement
  */
-export const createRoute = (routes, notFoundElement?: React.FC) => {
-  // const flattenedRoutes: any[] = [];
-  // const addRouteToFlattenedRoutes = (route) => {
-  //   flattenedRoutes.push(route);
-  //   if (route.routes) {
-  //     for (const r of route.routes) {
-  //       addRouteToFlattenedRoutes(r);
-  //     }
-  //   }
-  // };
-  // for (const route of routes) {
-  //   addRouteToFlattenedRoutes(route);
-  // }
-
-  // const RouteComponent = () => (
-  //   <BrowserRouter>
-  //     <Switch>
-  //       {routes.map((route) => (
-  //         <RouteWithSubRoutes route={route} />
-  //       ))}
-  //       <Route component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>} />
-  //     </Switch>
-  //   </BrowserRouter>
-  // );
+export const createRoute = <T extends RouteArray>(routes: T, notFoundElement?: React.FC) => {
+  const SwitchComponent = () => (
+    <Switch>
+      {routes.map((route) => (
+        <RouteWithSubRoutes route={route} />
+      ))}
+      <Route component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>} />
+    </Switch>
+  );
 
   type Routes = typeof routes[number];
   type RoutesKeys = Routes["key"];
@@ -68,5 +62,12 @@ export const createRoute = (routes, notFoundElement?: React.FC) => {
     console.log("createPath, route: ", route);
   };
 
-  return { RouteComponent: () => null, createPath, pushPath: undefined, replacePath: undefined, routes };
+  return { SwitchComponent, createPath, pushPath: undefined, replacePath: undefined, routes };
 };
+
+const r = createRoute([
+  { key: "RAMBO", path: "/rambo", component: () => <b>Rambo</b> },
+  { key: "RAMBOS", path: "/rambos", component: () => <b>Rambos</b> },
+] as const);
+
+r.createPath("");
