@@ -39,7 +39,7 @@ describe("robust-react-router works", () => {
     ] as const);
     expect(routes.createPath("LANDING_PAGE")).toBe("/");
     expect(routes.createPath("BOOKS")).toBe("/books");
-    expect(routes.createPath("MY_BOOKS")).toBe("/myBooks");
+    expect(routes.createPath("MY_BOOKS")).toBe("/books/myBooks");
   });
 
   it("should createPath without params", () => {
