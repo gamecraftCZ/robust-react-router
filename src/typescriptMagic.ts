@@ -3,10 +3,11 @@ import React from "react";
 export interface Route {
   path: string;
   key: string;
-  exact?: boolean;
   component: React.FC;
+  exact?: boolean;
   routes?: readonly Route[];
   options?: Function;
+  wrapper?: React.FC;
 }
 
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
@@ -16,7 +17,6 @@ type ExtractRouteOptionsFunction<Routes, Key> = Routes extends { key: Key; optio
 export type ExtractRouteOptions<Routes, Key> = Parameters<ExtractRouteOptionsFunction<Routes, Key>>[0];
 
 // Flattening of Routes
-
 export type FlattenRoutes<R> = R extends readonly any[] ? FlattenRoute<R[number]> : never;
 type FlattenRoute<R> = R extends { routes: readonly any[] } ? R | FR1<R["routes"][number]> : R;
 type FR1<R> = R extends { routes: readonly any[] } ? R | FR2<R["routes"][number]> : R;

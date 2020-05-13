@@ -1,15 +1,25 @@
 import { createRoute } from "./index";
 import React from "react";
-import { cleanup, render } from "@testing-library/react";
+import { Router } from "react-router-dom";
+import { createMemoryHistory } from "history";
+import Enzyme, { render } from "enzyme";
+import Adapter from "enzyme-adapter-react-16";
+
+const LandingPage = () => <div className="landing-page">Landing page</div>;
+const Home = () => <div className="home">Home</div>;
+const Books = (props) => <div className="books">Books - {props.children}</div>;
+const MyBooks = () => <div className="my-books">My books</div>;
+const BookPage = () => <div className="book-page">Book Page</div>;
+const Chat = () => <div className="chat">Chat</div>;
 
 describe("robust-react-router works", () => {
-  afterEach(cleanup);
+  beforeAll(() => Enzyme.configure({ adapter: new Adapter() }));
 
   it("should chose right path by key - no nesting", () => {
     const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
-      { path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> },
-      { path: "/books", key: "BOOKS", exact: true, component: () => <b>Books</b> },
+      { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+      { path: "/home", key: "HOME", exact: true, component: Home },
+      { path: "/books", key: "BOOKS", exact: true, component: Books },
     ] as const);
     expect(routes.createPath("LANDING_PAGE")).toBe("/");
     expect(routes.createPath("HOME")).toBe("/home");
@@ -18,13 +28,13 @@ describe("robust-react-router works", () => {
 
   it("should chose right path by key - with nesting", () => {
     const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
+      { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
       {
         path: "/books",
         key: "BOOKS",
         exact: true,
-        component: () => <b>Books</b>,
-        routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: () => <b>My books</b> }],
+        component: Books,
+        routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: MyBooks }],
       },
     ] as const);
     expect(routes.createPath("LANDING_PAGE")).toBe("/");
@@ -33,9 +43,7 @@ describe("robust-react-router works", () => {
   });
 
   it("should createPath without params", () => {
-    const routes = createRoute([
-      { path: "/books", key: "BOOKS", exact: true, component: () => <b>Landing page</b> },
-    ] as const);
+    const routes = createRoute([{ path: "/books", key: "BOOKS", exact: true, component: LandingPage }] as const);
     expect(routes.createPath("BOOKS")).toBe("/books");
   });
 
@@ -45,7 +53,7 @@ describe("robust-react-router works", () => {
         path: "/books/:id",
         key: "BOOK_PAGE",
         exact: true,
-        component: () => <b>Book page</b>,
+        component: BookPage,
         options: (_: { id: string }) => null,
       },
     ] as const);
@@ -58,7 +66,7 @@ describe("robust-react-router works", () => {
         path: "/books",
         key: "BOOK_PAGE",
         exact: true,
-        component: () => <b>Book page</b>,
+        component: BookPage,
         search: { id: "" as string },
         options: (_: { id: number }) => null,
       },
@@ -72,7 +80,7 @@ describe("robust-react-router works", () => {
         path: "/books",
         key: "BOOK_PAGE",
         exact: true,
-        component: () => <b>Book page</b>,
+        component: BookPage,
         options: (_: { hash: string }) => null,
       },
     ] as const);
@@ -85,7 +93,7 @@ describe("robust-react-router works", () => {
         path: "/chat/:id",
         key: "CHAT",
         exact: true,
-        component: () => <b>Chat</b>,
+        component: Chat,
         search: { m: "" as string },
         options: (_: { m: string; id: number; hash: string }) => null,
       },
@@ -96,67 +104,106 @@ describe("robust-react-router works", () => {
   });
 
   it("should pushPath", () => {
-    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const);
+    const history = createMemoryHistory();
+    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const, {
+      history,
+    });
     const originalHistoryLength = history.length;
     routes.pushPath("HOME");
+    expect(history.location.pathname).toBe("/home");
     expect(history.length).toBe(originalHistoryLength + 1);
   });
 
   it("should replacePath", () => {
-    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const);
+    const history = createMemoryHistory();
+    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const, {
+      history,
+    });
     const originalHistoryLength = history.length;
     routes.replacePath("HOME");
+    expect(history.location.pathname).toBe("/home");
     expect(history.length).toBe(originalHistoryLength);
   });
 
   it("should render path correctly - no nesting", () => {
-    const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
-      { path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> },
-    ] as const);
-    const { queryByText } = render(<routes.BrowserRouterComponent />);
-    expect(queryByText("Landing page")).toBeTruthy();
+    const history = createMemoryHistory();
+    const routes = createRoute(
+      [
+        { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+        { path: "/home", key: "HOME", exact: true, component: Home },
+      ] as const,
+      { history },
+    );
+    const wrapper = render(
+      <Router history={history}>
+        <div>
+          <routes.SwitchComponent />
+        </div>
+      </Router>,
+    );
+
+    expect(wrapper.find(".landing-page")).toHaveLength(1);
+    expect(wrapper.find(".home")).toHaveLength(0);
 
     routes.pushPath("HOME");
-    expect(queryByText("Home")).toBeTruthy();
+    expect(wrapper.find(".landing-page")).toHaveLength(0);
+    expect(wrapper.find(".home")).toHaveLength(1);
 
     routes.pushPath("LANDING_PAGE");
-    expect(queryByText("Landing page")).toBeTruthy();
+    expect(wrapper.find("landing-page")).toHaveLength(1);
   });
 
-  it("should render path correctly - with mesting", () => {
-    const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
-      {
-        path: "/books",
-        key: "BOOKS",
-        exact: true,
-        component: () => <b>Books</b>,
-        routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: () => <b>My books</b> }],
-      },
-    ] as const);
-    const { queryByText } = render(<routes.BrowserRouterComponent />);
-    expect(queryByText("Landing page")).toBeTruthy();
+  it("should render path correctly - with nesting", () => {
+    const history = createMemoryHistory();
+    const routes = createRoute(
+      [
+        { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+        {
+          path: "/books",
+          key: "BOOKS",
+          exact: true,
+          component: () => <b>Books</b>,
+          routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: MyBooks }],
+        },
+      ] as const,
+      { history },
+    );
+    const wrapper = render(
+      <Router history={history}>
+        <div>
+          <routes.SwitchComponent />
+        </div>
+      </Router>,
+    );
+    expect(wrapper.find(".landing-page")).toHaveLength(1);
 
     routes.pushPath("BOOKS");
-    expect(queryByText("Books")).toBeTruthy();
+    expect(wrapper.find(".books")).toHaveLength(1);
+    expect(wrapper.find(".my-books")).toHaveLength(0);
 
     routes.pushPath("MY_BOOKS");
-    expect(queryByText("My books")).toBeTruthy();
+    expect(wrapper.find(".my-books")).toHaveLength(1);
+    expect(wrapper.find(".books")).toHaveLength(1);
   });
 
   it("should render with wrapper", () => {
+    const history = createMemoryHistory();
     const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
       {
-        path: "/home",
+        path: "/",
         key: "HOME",
         exact: true,
-        component: () => <b>Home</b>,
-        wrapper: ({ child }) => <button data-testid="wrapper-button">{child}</button>,
+        component: Home,
+        wrapper: (props) => <button className="wrapper-button">{props.children}</button>,
       },
     ] as const);
-    const { getByTestId } = render(<routes.BrowserRouterComponent />);
-    expect(getByTestId("wrapper-button")).toBeTruthy();
+    const wrapper = render(
+      <Router history={history}>
+        <div>
+          <routes.SwitchComponent />
+        </div>
+      </Router>,
+    );
+    expect(wrapper.find(".wrapper-button")).toHaveLength(1);
   });
 });
