@@ -8,6 +8,7 @@ export interface Route {
   routes?: readonly Route[];
   options?: Function;
   wrapper?: React.FC;
+  _fullPath?: string;
 }
 
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
@@ -17,6 +18,7 @@ type ExtractRouteOptionsFunction<Routes, Key> = Routes extends { key: Key; optio
 export type ExtractRouteOptions<Routes, Key> = Parameters<ExtractRouteOptionsFunction<Routes, Key>>[0];
 
 // Flattening of Routes
+// Typescript does not support recursive types as we need yet. This is just a workaround
 export type FlattenRoutes<R> = R extends readonly any[] ? FlattenRoute<R[number]> : never;
 type FlattenRoute<R> = R extends { routes: readonly any[] } ? R | FR1<R["routes"][number]> : R;
 type FR1<R> = R extends { routes: readonly any[] } ? R | FR2<R["routes"][number]> : R;

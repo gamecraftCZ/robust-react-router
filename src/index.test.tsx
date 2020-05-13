@@ -11,96 +11,153 @@ const Books = (props) => <div className="books">Books - {props.children}</div>;
 const MyBooks = () => <div className="my-books">My books</div>;
 const BookPage = () => <div className="book-page">Book Page</div>;
 const Chat = () => <div className="chat">Chat</div>;
+const UserForumPost = () => <div className="user-forum-post">User forum - post</div>;
 
 describe("robust-react-router works", () => {
   beforeAll(() => Enzyme.configure({ adapter: new Adapter() }));
 
-  it("should chose right path by key - no nesting", () => {
-    const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
-      { path: "/home", key: "HOME", exact: true, component: Home },
-      { path: "/books", key: "BOOKS", exact: true, component: Books },
-    ] as const);
-    expect(routes.createPath("LANDING_PAGE")).toBe("/");
-    expect(routes.createPath("HOME")).toBe("/home");
-    expect(routes.createPath("BOOKS")).toBe("/books");
-  });
+  describe("createPath", () => {
+    it("should chose right path by key - no nesting", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+          { path: "/home", key: "HOME", exact: true, component: Home },
+          { path: "/books", key: "BOOKS", exact: true, component: Books },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("LANDING_PAGE")).toBe("/");
+      expect(routes.createPath("HOME")).toBe("/home");
+      expect(routes.createPath("BOOKS")).toBe("/books");
+    });
 
-  it("should chose right path by key - with nesting", () => {
-    const routes = createRoute([
-      { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
-      {
-        path: "/books",
-        key: "BOOKS",
-        exact: true,
-        component: Books,
-        routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: MyBooks }],
-      },
-    ] as const);
-    expect(routes.createPath("LANDING_PAGE")).toBe("/");
-    expect(routes.createPath("BOOKS")).toBe("/books");
-    expect(routes.createPath("MY_BOOKS")).toBe("/books/myBooks");
-  });
+    it("should chose right path by key - with nesting", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+          {
+            path: "/books",
+            key: "BOOKS",
+            exact: true,
+            component: Books,
+            routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: MyBooks }],
+          },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("LANDING_PAGE")).toBe("/");
+      expect(routes.createPath("BOOKS")).toBe("/books");
+      expect(routes.createPath("MY_BOOKS")).toBe("/books/myBooks");
+    });
 
-  it("should createPath without params", () => {
-    const routes = createRoute([{ path: "/books", key: "BOOKS", exact: true, component: LandingPage }] as const);
-    expect(routes.createPath("BOOKS")).toBe("/books");
-  });
+    it("should createPath without params", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute([{ path: "/books", key: "BOOKS", exact: true, component: LandingPage }] as const, {
+        history,
+      });
+      expect(routes.createPath("BOOKS")).toBe("/books");
+    });
 
-  it("should createPath with param only", () => {
-    const routes = createRoute([
-      {
-        path: "/books/:id",
-        key: "BOOK_PAGE",
-        exact: true,
-        component: BookPage,
-        options: (_: { id: string }) => null,
-      },
-    ] as const);
-    expect(routes.createPath("BOOK_PAGE", { id: "12345" })).toBe("/books/12345");
-  });
+    it("should createPath with param only", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          {
+            path: "/books/:id",
+            key: "BOOK_PAGE",
+            exact: true,
+            component: BookPage,
+            options: (_: { id: string }) => null,
+          },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("BOOK_PAGE", { id: "12345" })).toBe("/books/12345");
+    });
 
-  it("should createPath with search only", () => {
-    const routes = createRoute([
-      {
-        path: "/books",
-        key: "BOOK_PAGE",
-        exact: true,
-        component: BookPage,
-        search: { id: "" as string },
-        options: (_: { id: number }) => null,
-      },
-    ] as const);
-    expect(routes.createPath("BOOK_PAGE", { id: 12345 })).toBe("/books?id=12345");
-  });
+    it("should createPath with search only", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          {
+            path: "/books",
+            key: "BOOK_PAGE",
+            exact: true,
+            component: BookPage,
+            search: { id: "" as string },
+            options: (_: { id: number }) => null,
+          },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("BOOK_PAGE", { id: 12345 })).toBe("/books?id=12345");
+    });
 
-  it("should createPath with hash only", () => {
-    const routes = createRoute([
-      {
-        path: "/books",
-        key: "BOOK_PAGE",
-        exact: true,
-        component: BookPage,
-        options: (_: { hash: string }) => null,
-      },
-    ] as const);
-    expect(routes.createPath("BOOK_PAGE", { hash: "12345" })).toBe("/books#12345");
-  });
+    it("should createPath with hash only", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          {
+            path: "/books",
+            key: "BOOK_PAGE",
+            exact: true,
+            component: BookPage,
+            options: (_: { hash: string }) => null,
+          },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("BOOK_PAGE", { hash: "12345" })).toBe("/books#12345");
+    });
 
-  it("should createPath with value, search and hash", () => {
-    const routes = createRoute([
-      {
-        path: "/chat/:id",
-        key: "CHAT",
-        exact: true,
-        component: Chat,
-        search: { m: "" as string },
-        options: (_: { m: string; id: number; hash: string }) => null,
-      },
-    ] as const);
-    expect(routes.createPath("CHAT", { m: "some_message", id: 12345, hash: "basic" })).toBe(
-      "/chat/12345?m=some_message#basic",
-    );
+    it("should createPath with value, search and hash", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          {
+            path: "/chat/:id",
+            key: "CHAT",
+            exact: true,
+            component: Chat,
+            search: { m: "" as string },
+            options: (_: { m: string; id: number; hash: string }) => null,
+          },
+        ] as const,
+        { history },
+      );
+      expect(routes.createPath("CHAT", { m: "some_message", id: 12345, hash: "basic" })).toBe(
+        "/chat/12345?m=some_message#basic",
+      );
+    });
+
+    // it("should createPath with value, search and hash - with nasting", () => {
+    //   const history = createMemoryHistory();
+    //   const routes = createRoute(
+    //     [
+    //       {
+    //         path: "/user/:id",
+    //         key: "USER_PROFILE",
+    //         exact: true,
+    //         component: Chat,
+    //         options: (_: { id: number }) => null,
+    //         routes: [
+    //           {
+    //             path: "/forum/:postId",
+    //             key: "USER_FORUM_POST",
+    //             component: UserForumPost,
+    //             options: (_: { postId: number; hash: string; m: string }) => null,
+    //           },
+    //         ],
+    //       },
+    //     ] as const,
+    //     { history },
+    //   );
+    //   expect(routes.createPath("USER_FORUM_POST", { id: 12345, postId: 22, m: "some_message", hash: "basic" })).toBe(
+    //     "/user/12345/forum/postId?m=some_message#basic",
+    //   );
+    // });
   });
 
   it("should pushPath", () => {
@@ -146,6 +203,7 @@ describe("robust-react-router works", () => {
     expect(wrapper.find(".home")).toHaveLength(0);
 
     routes.pushPath("HOME");
+    wrapper;
     expect(wrapper.find(".landing-page")).toHaveLength(0);
     expect(wrapper.find(".home")).toHaveLength(1);
 
@@ -188,15 +246,18 @@ describe("robust-react-router works", () => {
 
   it("should render with wrapper", () => {
     const history = createMemoryHistory();
-    const routes = createRoute([
-      {
-        path: "/",
-        key: "HOME",
-        exact: true,
-        component: Home,
-        wrapper: (props) => <button className="wrapper-button">{props.children}</button>,
-      },
-    ] as const);
+    const routes = createRoute(
+      [
+        {
+          path: "/",
+          key: "HOME",
+          exact: true,
+          component: Home,
+          wrapper: (props) => <button className="wrapper-button">{props.children}</button>,
+        },
+      ] as const,
+      { history },
+    );
     const wrapper = render(
       <Router history={history}>
         <div>
