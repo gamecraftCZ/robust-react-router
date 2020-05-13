@@ -1,11 +1,13 @@
 import React from "react";
-import { Route as ReactRoute, Switch } from "react-router-dom";
+import { BrowserRouter, Route as ReactRoute, Switch } from "react-router-dom";
+import { ExtractRouteOptions, ExtractRouteWithoutOptions, FlattenRoutes, Route } from "./typescriptMagic";
 
 // Inspiration from:
 // https://medium.com/better-programming/react-router-architecture-thats-simple-scalable-and-protected-da896827f946
 //
-// Tutorial describing all the typescript magic used.
+// Tutorials describing all the typescript magic used.
 // https://artsy.github.io/blog/2018/11/21/conditional-types-in-typescript/
+// https://medium.com/@flut1/deep-flatten-typescript-types-with-finite-recursion-cb79233d93ca
 
 /**
  * Render a route with potential sub routes
@@ -19,21 +21,12 @@ const RouteWithSubRoutes = (route) => (
   />
 );
 
-interface Route {
-  path: string;
-  key: string;
-  exact?: boolean;
-  component: React.FC;
-  routes?: Route[];
-}
-type RouteArray = readonly Route[];
-
 /**
- * Create router object.
+ * Create router object. Maximum routes recursion level is 10.
  * @param routes
  * @param notFoundElement
  */
-export const createRoute = <T extends RouteArray>(routes: T, notFoundElement?: React.FC) => {
+export const createRoute = <T extends readonly Route[]>(routes: T, notFoundElement?: React.FC) => {
   const SwitchComponent = () => (
     <Switch>
       {routes.map((route) => (
@@ -42,22 +35,26 @@ export const createRoute = <T extends RouteArray>(routes: T, notFoundElement?: R
       <ReactRoute component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>} />
     </Switch>
   );
+  const BrowserRouterComponent = () => (
+    <BrowserRouter>
+      <SwitchComponent />
+    </BrowserRouter>
+  );
 
-  type Routes = typeof routes[number];
+  type Routes = FlattenRoutes<typeof routes>;
+  // type Routes = typeof routes[number];
   type RoutesKeys = Routes["key"];
 
-  type ExtractRoutesParameters<A, T> = A extends { key: T } ? A : never;
-  type ExtractRouteOptions<A> = A extends { options: any } ? A["options"] : never;
-  type ArgumentsType<T extends (...args: any[]) => any> = T extends (...args: infer A) => any ? A : never;
-
-  const createPath = <T extends RoutesKeys>(
-    route: T,
-    options: Parameters<ExtractRouteOptions<ExtractRoutesParameters<Routes, T>>>[0],
-  ) => {
+  function createPath(route: ExtractRouteWithoutOptions<Routes>["key"], options?: never): string;
+  function createPath<Key extends RoutesKeys>(route: Key, options: ExtractRouteOptions<Routes, Key>): string;
+  function createPath(route: any, options?: any): string {
     console.log("createPath, route: ", route);
-  };
+    return "NOT implemented yet";
+  }
 
-  return { SwitchComponent, createPath, pushPath: undefined, replacePath: undefined, routes };
+
+
+  return { BrowserRouterComponent, SwitchComponent, createPath, pushPath: undefined, replacePath: undefined, routes };
 };
 
 const r = createRoute([
@@ -71,3 +68,4 @@ const r = createRoute([
 ] as const);
 
 r.createPath("RAMBO", { id: 18 });
+r.createPath("RAMBOS");

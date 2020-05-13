@@ -1,6 +1,6 @@
 import { createRoute } from "./index";
 import React from "react";
-import { render, cleanup } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 
 describe("robust-react-router works", () => {
   afterEach(cleanup);
@@ -10,8 +10,7 @@ describe("robust-react-router works", () => {
       { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
       { path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> },
       { path: "/books", key: "BOOKS", exact: true, component: () => <b>Books</b> },
-    ]);
-    expect(routes.createPath("DOES_NOT_EXIST")).toBeUndefined();
+    ] as const);
     expect(routes.createPath("LANDING_PAGE")).toBe("/");
     expect(routes.createPath("HOME")).toBe("/home");
     expect(routes.createPath("BOOKS")).toBe("/books");
@@ -27,23 +26,30 @@ describe("robust-react-router works", () => {
         component: () => <b>Books</b>,
         routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: () => <b>My books</b> }],
       },
-    ]);
-    expect(routes.createPath("DOES_NOT_EXIST")).toBeUndefined();
+    ] as const);
     expect(routes.createPath("LANDING_PAGE")).toBe("/");
     expect(routes.createPath("BOOKS")).toBe("/books");
     expect(routes.createPath("MY_BOOKS")).toBe("/myBooks");
   });
 
   it("should createPath without params", () => {
-    const routes = createRoute([{ path: "/books", key: "BOOKS", exact: true, component: () => <b>Landing page</b> }]);
+    const routes = createRoute([
+      { path: "/books", key: "BOOKS", exact: true, component: () => <b>Landing page</b> },
+    ] as const);
     expect(routes.createPath("BOOKS")).toBe("/books");
   });
 
   it("should createPath with param only", () => {
     const routes = createRoute([
-      { path: "/books/:id", key: "BOOK_PAGE", exact: true, component: () => <b>Book page</b> },
-    ]);
-    expect(routes.createPath("BOOKS", { id: "12345" })).toBe("/books/12345");
+      {
+        path: "/books/:id",
+        key: "BOOK_PAGE",
+        exact: true,
+        component: () => <b>Book page</b>,
+        options: (_: { id: string }) => null,
+      },
+    ] as const);
+    expect(routes.createPath("BOOK_PAGE", { id: "12345" })).toBe("/books/12345");
   });
 
   it("should createPath with search only", () => {
@@ -54,14 +60,23 @@ describe("robust-react-router works", () => {
         exact: true,
         component: () => <b>Book page</b>,
         search: { id: "" as string },
+        options: (_: { id: number }) => null,
       },
-    ]);
-    expect(routes.createPath("BOOKS", { id: "12345" })).toBe("/books?id=12345");
+    ] as const);
+    expect(routes.createPath("BOOK_PAGE", { id: 12345 })).toBe("/books?id=12345");
   });
 
   it("should createPath with hash only", () => {
-    const routes = createRoute([{ path: "/books", key: "BOOK_PAGE", exact: true, component: () => <b>Book page</b> }]);
-    expect(routes.createPath("BOOKS", { hash: "12345" })).toBe("/books#12345");
+    const routes = createRoute([
+      {
+        path: "/books",
+        key: "BOOK_PAGE",
+        exact: true,
+        component: () => <b>Book page</b>,
+        options: (_: { hash: string }) => null,
+      },
+    ] as const);
+    expect(routes.createPath("BOOK_PAGE", { hash: "12345" })).toBe("/books#12345");
   });
 
   it("should createPath with value, search and hash", () => {
@@ -72,24 +87,25 @@ describe("robust-react-router works", () => {
         exact: true,
         component: () => <b>Chat</b>,
         search: { m: "" as string },
+        options: (_: { m: string; id: number; hash: string }) => null,
       },
-    ]);
-    expect(routes.createPath("CHAT", { m: "some_message", id: "12345", hash: "basic" })).toBe(
+    ] as const);
+    expect(routes.createPath("CHAT", { m: "some_message", id: 12345, hash: "basic" })).toBe(
       "/chat/12345?m=some_message#basic",
     );
   });
 
   it("should pushPath", () => {
-    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }]);
+    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const);
     const originalHistoryLength = history.length;
     routes.pushPath("HOME");
     expect(history.length).toBe(originalHistoryLength + 1);
   });
 
   it("should replacePath", () => {
-    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }]);
+    const routes = createRoute([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const);
     const originalHistoryLength = history.length;
-    routes.pushPath("HOME");
+    routes.replacePath("HOME");
     expect(history.length).toBe(originalHistoryLength);
   });
 
@@ -97,8 +113,8 @@ describe("robust-react-router works", () => {
     const routes = createRoute([
       { path: "/", key: "LANDING_PAGE", exact: true, component: () => <b>Landing page</b> },
       { path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> },
-    ]);
-    const { queryByText } = render(<routes.RouteComponent />);
+    ] as const);
+    const { queryByText } = render(<routes.BrowserRouterComponent />);
     expect(queryByText("Landing page")).toBeTruthy();
 
     routes.pushPath("HOME");
@@ -118,8 +134,8 @@ describe("robust-react-router works", () => {
         component: () => <b>Books</b>,
         routes: [{ path: "/myBooks", key: "MY_BOOKS", exact: true, component: () => <b>My books</b> }],
       },
-    ]);
-    const { queryByText } = render(<routes.RouteComponent />);
+    ] as const);
+    const { queryByText } = render(<routes.BrowserRouterComponent />);
     expect(queryByText("Landing page")).toBeTruthy();
 
     routes.pushPath("BOOKS");
@@ -139,8 +155,8 @@ describe("robust-react-router works", () => {
         component: () => <b>Home</b>,
         wrapper: ({ child }) => <button data-testid="wrapper-button">{child}</button>,
       },
-    ]);
-    const { getByTestId } = render(<routes.RouteComponent />);
+    ] as const);
+    const { getByTestId } = render(<routes.BrowserRouterComponent />);
     expect(getByTestId("wrapper-button")).toBeTruthy();
   });
 });
