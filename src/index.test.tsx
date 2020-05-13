@@ -132,32 +132,43 @@ describe("robust-react-router works", () => {
       );
     });
 
-    // it("should createPath with value, search and hash - with nasting", () => {
-    //   const history = createMemoryHistory();
-    //   const routes = createRoute(
-    //     [
-    //       {
-    //         path: "/user/:id",
-    //         key: "USER_PROFILE",
-    //         exact: true,
-    //         component: Chat,
-    //         options: (_: { id: number }) => null,
-    //         routes: [
-    //           {
-    //             path: "/forum/:postId",
-    //             key: "USER_FORUM_POST",
-    //             component: UserForumPost,
-    //             options: (_: { postId: number; hash: string; m: string }) => null,
-    //           },
-    //         ],
-    //       },
-    //     ] as const,
-    //     { history },
-    //   );
-    //   expect(routes.createPath("USER_FORUM_POST", { id: 12345, postId: 22, m: "some_message", hash: "basic" })).toBe(
-    //     "/user/12345/forum/postId?m=some_message#basic",
-    //   );
-    // });
+    it("should createPath with value, search and hash - with nasting", () => {
+      const history = createMemoryHistory();
+      const routes = createRoute(
+        [
+          {
+            path: "/user/:id",
+            component: Chat,
+            key: "USER_PROFILE",
+            options: (_: { id: number }) => null,
+            routes: [
+              {
+                path: "/forum/:postId",
+                component: UserForumPost,
+                key: "USER_FORUM_POST",
+                options: (_: { postId: number; hash?: string }) => null,
+                routes: [
+                  {
+                    path: "/detail",
+                    component: Home,
+                    key: "USER_FORUM_POST_DETAIL",
+                    options: (_: { m: string; hash: string }) => null,
+                  },
+                ],
+              },
+            ],
+          },
+        ] as const,
+        { history },
+      );
+      // routes.flattened({key: "USER_FORUM_POST_DETAIL", parent});
+      expect(routes.createPath("USER_PROFILE", { id: 11 })).toBe("/user/11");
+      expect(routes.createPath("USER_FORUM_POST", { id: 11, postId: 22 })).toBe("/user/11/forum/22");
+      expect(routes.createPath("USER_FORUM_POST", { id: 11, postId: 22, hash: "more" })).toBe("/user/11/forum/22#more");
+      expect(routes.createPath("USER_FORUM_POST_DETAIL", { id: 11, postId: 22, m: "33", hash: "options" })).toBe(
+        "/user/11/forum/22/detail?m=33#options",
+      );
+    });
   });
 
   it("should pushPath", () => {

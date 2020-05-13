@@ -1,9 +1,9 @@
 import React from "react";
 
 export interface Route {
-  path: string;
+  path?: string;
   key: string;
-  component: React.FC;
+  component?: React.FC;
   exact?: boolean;
   routes?: readonly Route[];
   options?: Function;
@@ -11,22 +11,73 @@ export interface Route {
   _fullPath?: string;
 }
 
+///////////////////////////////////
+// Exclude from U those types that are assignable to T
+type Exclude<U, T> = U extends T ? never : U;
+
+// Extract from U those types that are assignable to T
+type Extract<U, T> = U extends T ? U : never;
+//////////////////////////////////
+
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
 
 // Extract route options function if key matches and options exists.
 type ExtractRouteOptionsFunction<Routes, Key> = Routes extends { key: Key; options: any } ? Routes["options"] : never;
-export type ExtractRouteOptions<Routes, Key> = Parameters<ExtractRouteOptionsFunction<Routes, Key>>[0];
+type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => any ? Parameters<O>[0] : never;
+
+type ExtractOptionsIfExists<R> = R extends { options: any } ? ExtractRouteOptionsWithoutNesting<R["options"]> : never;
+
+export type ExtractRouteOptions<Routes, K> = Routes extends { key: K } ? ExtractRouteOptionsWithParents<Routes> : never;
+
+type ExtractRouteOptionsWithParents<R> = R extends { parent: any }
+  ? ExtractOptionsIfExists<R> & EWP2<R["parent"]>
+  : ExtractOptionsIfExists<R>;
+type EWP2<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP3<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP3<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP4<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP4<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP5<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP5<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP6<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP6<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP7<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP7<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP8<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP8<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP9<R["parent"]> : ExtractOptionsIfExists<R>;
+type EWP9<R> = R extends { parent: any }
+  ? ExtractOptionsIfExists<R> & ExtractOptionsIfExists<R["parent"]>
+  : ExtractOptionsIfExists<R>;
 
 // Flattening of Routes
 // Typescript does not support recursive types as we need yet. This is just a workaround
 export type FlattenRoutes<R> = R extends readonly any[] ? FlattenRoute<R[number]> : never;
-type FlattenRoute<R> = R extends { routes: readonly any[] } ? R | FR1<R["routes"][number]> : R;
-type FR1<R> = R extends { routes: readonly any[] } ? R | FR2<R["routes"][number]> : R;
-type FR2<R> = R extends { routes: readonly any[] } ? R | FR3<R["routes"][number]> : R;
-type FR3<R> = R extends { routes: readonly any[] } ? R | FR4<R["routes"][number]> : R;
-type FR4<R> = R extends { routes: readonly any[] } ? R | FR5<R["routes"][number]> : R;
-type FR5<R> = R extends { routes: readonly any[] } ? R | FR6<R["routes"][number]> : R;
-type FR6<R> = R extends { routes: readonly any[] } ? R | FR7<R["routes"][number]> : R;
-type FR7<R> = R extends { routes: readonly any[] } ? R | FR8<R["routes"][number]> : R;
-type FR8<R> = R extends { routes: readonly any[] } ? R | FR9<R["routes"][number]> : R;
-type FR9<R> = R extends { routes: readonly any[] } ? R | R["routes"][number] : R;
+type FlattenRoute<R> = R extends { routes: readonly any[] } ? R | FR1<R["routes"][number], R> : R;
+type FR1<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR2<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR2<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR3<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR3<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR4<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR4<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR5<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR5<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR6<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR6<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR7<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR7<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR8<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR8<R, P> = R extends { routes: readonly any[] }
+  ? (R & { readonly parent: P }) | FR9<R["routes"][number], R & { readonly parent: P }>
+  : R & { readonly parent: P };
+type FR9<R, P> = R extends { routes: readonly any[] } ? (R & { readonly parent: P }) | R["routes"][number] : R;
+
+// export type WithoutSubRoutes<A> = A extends readonly any[]
+//   ? RouteWithoutSubRoutes<A[number]>
+//   : RouteWithoutSubRoutes<A>;
+// type RouteWithoutSubRoutes<A> = { [K in Exclude<keyof A, "routes">]: A[K] };
+//////////// TESTS ////////////
+
+// type Jahoda = never & { ja: number };
+// const a: Jahoda = { ja: 1 };

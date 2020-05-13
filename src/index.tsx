@@ -22,7 +22,7 @@ const RouteWrapperRenderer = ({ route, children }) =>
 const RouteWithSubRoutes = ({ route, notFoundElement }) => (
   <ReactRoute
     path={route.path}
-    exact={route.exact}
+    exact={route.exact ?? true}
     render={(props) => (
       <RouteWrapperRenderer route={route}>
         <route.component {...props}>
@@ -61,7 +61,7 @@ const flattenRoutes = (routes: readonly Route[], rootPath?: string): Route[] => 
     route._fullPath = (rootPath || "") + route.path;
     flattened.push(route);
     if (route.routes) {
-      flattened.push(...flattenRoutes(route.routes, route.path));
+      flattened.push(...flattenRoutes(route.routes, route._fullPath));
     }
   }
   return flattened;
@@ -87,6 +87,8 @@ export const createRoute = <T extends readonly Route[]>(
 
   type Routes = FlattenRoutes<typeof routes>;
   type RoutesKeys = Routes["key"];
+
+  function flattened(f: Routes): void {}
 
   function createPath(route: ExtractRouteWithoutOptions<Routes>["key"], params?: never): string;
   function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
@@ -133,5 +135,5 @@ export const createRoute = <T extends readonly Route[]>(
     routerOptions.history.replace(createPath(route, params));
   }
 
-  return { SwitchComponent, createPath, pushPath, replacePath, routes };
+  return { SwitchComponent, createPath, pushPath, replacePath, routes, flattened };
 };
