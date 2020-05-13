@@ -1,5 +1,5 @@
 import React from "react";
-import { generatePath, Route as ReactRoute, Switch } from "react-router-dom";
+import { generatePath, Route as ReactRoute, Router, Switch } from "react-router-dom";
 import { ExtractRouteOptions, ExtractRouteWithoutOptions, FlattenRoutes, Route } from "./typescriptMagic";
 import { History } from "history";
 import * as pathToRegexp from "path-to-regexp";
@@ -14,39 +14,32 @@ import { stringify } from "query-string";
 
 const RouteWrapperRenderer = ({ route, children }) =>
   route.wrapper ? <route.wrapper>{children}</route.wrapper> : children;
-
 /**
- * Render a route with potential sub routes
- * https://reacttraining.com/react-router/web/example/route-config
+ * Bla, bla, bla.
  */
-const RouteWithSubRoutes = ({ route, notFoundElement }) => (
-  <ReactRoute
-    path={route.path}
-    exact={route.exact ?? true}
-    render={(props) => (
-      <RouteWrapperRenderer route={route}>
-        <route.component {...props}>
-          <RenderRoutes routes={route.routes} notFoundElement={notFoundElement} />
-        </route.component>
-      </RouteWrapperRenderer>
-    )}
-  />
-);
-
-/**
- * Use this component for any new section of routes (any config object that has a "routes" property
- */
-export function RenderRoutes({ routes, notFoundElement }) {
+function RenderRoutes({ routes, notFoundElement }: { routes?: readonly Route[]; notFoundElement?: React.FC }) {
+  if (!routes) return null;
   if (routes.length > 0) {
     const key = routes.map((route) => route.key).join("");
     return (
       <Switch key={key}>
         {routes.map((route) => (
-          <RouteWithSubRoutes key={route.key} route={route} notFoundElement={notFoundElement} />
+          <ReactRoute
+            key={route.key}
+            path={route._fullPath}
+            exact={route.exact}
+            render={(props) => (
+              <RouteWrapperRenderer route={route}>
+                <route.component {...props}>
+                  <RenderRoutes routes={route.routes} notFoundElement={notFoundElement} />
+                </route.component>
+              </RouteWrapperRenderer>
+            )}
+          />
         ))}
         <ReactRoute
           key={`not-found-${key}`}
-          component={notFoundElement ? notFoundElement : () => <h1>Not Found!</h1>}
+          component={notFoundElement ? notFoundElement : () => <h2>Not Found!</h2>}
         />
       </Switch>
     );
@@ -67,28 +60,27 @@ const flattenRoutes = (routes: readonly Route[], rootPath?: string): Route[] => 
   return flattened;
 };
 
+export const RobustSwitch = ({ router }) => {
+  return <RenderRoutes routes={router.routes} notFoundElement={router.notFoundComponent} />;
+};
+export const RobustRouter = ({ router, children }) => {
+  return <Router history={router.history}>{children}</Router>;
+};
+
 /**
  * Create router object. Maximum routes recursion level is 10.
  * @param routes
  * @param options
  */
-export const createRoute = <T extends readonly Route[]>(
+export const createRouter = <T extends readonly Route[]>(
   routes: T,
-  options: { notFoundElement?: React.FC; history: History<History.LocationState> },
+  options: { notFoundComponent?: React.FC; history: History<History.LocationState> },
 ) => {
   const routerOptions = options;
   const flattenedRoutes = flattenRoutes(routes);
 
-  const SwitchComponent = () => (
-    <Switch>
-      <RenderRoutes routes={routes} notFoundElement={options?.notFoundElement} />
-    </Switch>
-  );
-
   type Routes = FlattenRoutes<typeof routes>;
   type RoutesKeys = Routes["key"];
-
-  function flattened(f: Routes): void {}
 
   function createPath(route: ExtractRouteWithoutOptions<Routes>["key"], params?: never): string;
   function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
@@ -135,5 +127,14 @@ export const createRoute = <T extends readonly Route[]>(
     routerOptions.history.replace(createPath(route, params));
   }
 
-  return { SwitchComponent, createPath, pushPath, replacePath, routes, flattened };
+  return {
+    history: options.history,
+    notFoundComponent: options.notFoundComponent,
+    routes,
+    createPath,
+    pushPath,
+    replacePath,
+  };
 };
+
+export { Route } from "./typescriptMagic";

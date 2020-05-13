@@ -1,9 +1,9 @@
 import React from "react";
 
 export interface Route {
-  path?: string;
+  path: string;
   key: string;
-  component?: React.FC;
+  component: React.FC;
   exact?: boolean;
   routes?: readonly Route[];
   options?: Function;
@@ -72,12 +72,3 @@ type FR8<R, P> = R extends { routes: readonly any[] }
   ? (R & { readonly parent: P }) | FR9<R["routes"][number], R & { readonly parent: P }>
   : R & { readonly parent: P };
 type FR9<R, P> = R extends { routes: readonly any[] } ? (R & { readonly parent: P }) | R["routes"][number] : R;
-
-// export type WithoutSubRoutes<A> = A extends readonly any[]
-//   ? RouteWithoutSubRoutes<A[number]>
-//   : RouteWithoutSubRoutes<A>;
-// type RouteWithoutSubRoutes<A> = { [K in Exclude<keyof A, "routes">]: A[K] };
-//////////// TESTS ////////////
-
-// type Jahoda = never & { ja: number };
-// const a: Jahoda = { ja: 1 };
