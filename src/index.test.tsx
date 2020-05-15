@@ -142,10 +142,9 @@ describe("robust-react-router works", () => {
             options: (_: { id: number }) => null,
             routes: [
               {
-                path: "/forum/:postId",
+                path: "/forum",
                 component: UserForumPost,
                 key: "USER_FORUM_POST",
-                options: (_: { postId: number; hash?: string }) => null,
                 routes: [
                   {
                     path: "/detail",
@@ -162,10 +161,10 @@ describe("robust-react-router works", () => {
       );
       // routes.flattened({key: "USER_FORUM_POST_DETAIL", parent});
       expect(routes.createPath("USER_PROFILE", { id: 11 })).toBe("/user/11");
-      expect(routes.createPath("USER_FORUM_POST", { id: 11, postId: 22 })).toBe("/user/11/forum/22");
-      expect(routes.createPath("USER_FORUM_POST", { id: 11, postId: 22, hash: "more" })).toBe("/user/11/forum/22#more");
-      expect(routes.createPath("USER_FORUM_POST_DETAIL", { id: 11, postId: 22, m: "33", hash: "options" })).toBe(
-        "/user/11/forum/22/detail?m=33#options",
+      expect(routes.createPath("USER_FORUM_POST", { id: 11 })).toBe("/user/11/forum");
+      expect(routes.createPath("USER_FORUM_POST", { id: 11 })).toBe("/user/11/forum");
+      expect(routes.createPath("USER_FORUM_POST_DETAIL", { id: 11, m: "33", hash: "options" })).toBe(
+        "/user/11/forum/detail?m=33#options",
       );
     });
   });

@@ -24,24 +24,23 @@ export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ?
 // Extract route options function if key matches and options exists.
 type ExtractRouteOptionsFunction<Routes, Key> = Routes extends { key: Key; options: any } ? Routes["options"] : never;
 type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => any ? Parameters<O>[0] : never;
+type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K; // VALID
 
-type ExtractOptionsIfExists<R> = R extends { options: any } ? ExtractRouteOptionsWithoutNesting<R["options"]> : never;
+type ExtractOptions<R> = R extends { options: any } ? ExtractRouteOptionsWithoutNesting<R["options"]> : never;
 
 export type ExtractRouteOptions<Routes, K> = Routes extends { key: K } ? ExtractRouteOptionsWithParents<Routes> : never;
 
 type ExtractRouteOptionsWithParents<R> = R extends { parent: any }
-  ? ExtractOptionsIfExists<R> & EWP2<R["parent"]>
-  : ExtractOptionsIfExists<R>;
-type EWP2<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP3<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP3<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP4<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP4<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP5<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP5<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP6<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP6<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP7<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP7<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP8<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP8<R> = R extends { parent: any } ? ExtractOptionsIfExists<R> & EWP9<R["parent"]> : ExtractOptionsIfExists<R>;
-type EWP9<R> = R extends { parent: any }
-  ? ExtractOptionsIfExists<R> & ExtractOptionsIfExists<R["parent"]>
-  : ExtractOptionsIfExists<R>;
+  ? And<ExtractOptions<R>, EWP2<R["parent"]>>
+  : ExtractOptions<R>;
+type EWP2<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP3<R["parent"]>> : ExtractOptions<R>;
+type EWP3<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP4<R["parent"]>> : ExtractOptions<R>;
+type EWP4<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP5<R["parent"]>> : ExtractOptions<R>;
+type EWP5<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP6<R["parent"]>> : ExtractOptions<R>;
+type EWP6<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP7<R["parent"]>> : ExtractOptions<R>;
+type EWP7<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP8<R["parent"]>> : ExtractOptions<R>;
+type EWP8<R> = R extends { parent: any } ? And<ExtractOptions<R>, EWP9<R["parent"]>> : ExtractOptions<R>;
+type EWP9<R> = R extends { parent: any } ? And<ExtractOptions<R>, ExtractOptions<R["parent"]>> : ExtractOptions<R>;
 
 // Flattening of Routes
 // Typescript does not support recursive types as we need yet. This is just a workaround
