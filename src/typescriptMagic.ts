@@ -11,20 +11,11 @@ export interface Route {
   _fullPath?: string;
 }
 
-///////////////////////////////////
-// Exclude from U those types that are assignable to T
-type Exclude<U, T> = U extends T ? never : U;
-
-// Extract from U those types that are assignable to T
-type Extract<U, T> = U extends T ? U : never;
-//////////////////////////////////
-
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
-
-// Extract route options function if key matches and options exists.
-type ExtractRouteOptionsFunction<Routes, Key> = Routes extends { key: Key; options: any } ? Routes["options"] : never;
 type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => any ? Parameters<O>[0] : never;
-type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K; // VALID
+type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K;
+
+export type RobustKeys<R extends { readonly routes: readonly Route[] }> = FlattenRoutes<R["routes"]>["key"];
 
 type ExtractOptions<R> = R extends { options: any } ? ExtractRouteOptionsWithoutNesting<R["options"]> : never;
 
