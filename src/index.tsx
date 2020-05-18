@@ -1,6 +1,6 @@
 import React from "react";
 import { generatePath, Route as ReactRoute, Router, Switch } from "react-router-dom";
-import { ExtractRouteOptions, ExtractRouteWithoutOptions, FlattenRoutes, Route } from "./typescriptMagic";
+import { ExtractRouteOptions, ExtractRouteWithoutOptions, FlattenRoutes, RobustRoute } from "./typescriptMagic";
 import { History } from "history";
 import * as pathToRegexp from "path-to-regexp";
 import { stringify } from "query-string";
@@ -17,7 +17,7 @@ const RouteWrapperRenderer = ({ route, children }) =>
 /**
  * Bla, bla, bla.
  */
-function RenderRoutes({ routes, notFoundElement }: { routes?: readonly Route[]; notFoundElement?: React.FC }) {
+function RenderRoutes({ routes, notFoundElement }: { routes?: readonly RobustRoute[]; notFoundElement?: React.FC }) {
   if (!routes) return null;
   if (routes.length > 0) {
     const key = routes.map((route) => route.key).join("");
@@ -48,8 +48,8 @@ function RenderRoutes({ routes, notFoundElement }: { routes?: readonly Route[]; 
   }
 }
 
-const flattenRoutes = (routes: readonly Route[], rootPath?: string): Route[] => {
-  const flattened: Route[] = [];
+const flattenRoutes = (routes: readonly RobustRoute[], rootPath?: string): RobustRoute[] => {
+  const flattened: RobustRoute[] = [];
   for (const route of routes) {
     route._fullPath = (rootPath || "") + route.path;
     flattened.push(route);
@@ -61,10 +61,10 @@ const flattenRoutes = (routes: readonly Route[], rootPath?: string): Route[] => 
 };
 
 export const RobustSwitch = ({ router }) => {
-  return <RenderRoutes routes={router.routes} notFoundElement={router.notFoundComponent} />;
+  return <RenderRoutes routes={router._routes} notFoundElement={router._notFoundComponent} />;
 };
 export const RobustRouter = ({ router, children }) => {
-  return <Router history={router.history}>{children}</Router>;
+  return <Router history={router._history}>{children}</Router>;
 };
 
 /**
@@ -72,7 +72,7 @@ export const RobustRouter = ({ router, children }) => {
  * @param routes
  * @param options
  */
-export const createRobust = <T extends readonly Route[]>(
+export const createRobustRouter = <T extends readonly RobustRoute[]>(
   routes: T,
   options: { notFoundComponent?: React.FC; history: History<History.LocationState> },
 ) => {
@@ -83,7 +83,7 @@ export const createRobust = <T extends readonly Route[]>(
   type RoutesKeys = Routes["key"];
 
   function createPath(route: ExtractRouteWithoutOptions<Routes>["key"], params?: never): string;
-  function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
+    function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
   function createPath<Key extends RoutesKeys>(route: Key, params?: any): string {
     const routeObject = flattenedRoutes.find((r) => r.key == route);
     if (!routeObject) return "ROUTER-ERROR"; // Thanks to TypeScript, it should never get there.
@@ -93,7 +93,7 @@ export const createRobust = <T extends readonly Route[]>(
     }
     if (!params) return routeObject._fullPath;
 
-    // region Parse path params and remove used ones from params
+    // path = region Parse path params and remove used ones from params
     const pathTokens = pathToRegexp
       .parse(routeObject._fullPath)
       .map((token) => (typeof token === "object" ? token.name : null))
@@ -128,14 +128,15 @@ export const createRobust = <T extends readonly Route[]>(
   }
 
   return {
-    history: options.history,
-    notFoundComponent: options.notFoundComponent,
-    routes,
     path: createPath,
-    pushPath,
     redirect: pushPath,
-    replacePath,
+    replace: replacePath,
+    back: options.history.goBack,
+    _routes: routes,
+    _flattenedRoutes: flattenedRoutes,
+    _history: options.history,
+    _notFoundComponent: options.notFoundComponent,
   };
 };
 
-export { Route } from "./typescriptMagic";
+export { RobustRoute, RobustKeys } from "./typescriptMagic";

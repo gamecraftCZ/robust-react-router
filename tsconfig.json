@@ -20,5 +20,5 @@
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
-  "files": ["src/index.tsx", "src/typescriptMagic.ts"]
+  "files": ["src/index.tsx", "src/typescriptMagic.ts", "src/hooks.tsx"]
 }

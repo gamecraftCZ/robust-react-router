@@ -1,24 +1,25 @@
-import { createRobust, RobustRouter, RobustSwitch } from "./index";
+import { createRobustRouter, RobustRouter, RobustSwitch } from "./index";
 import React from "react";
 import { createMemoryHistory } from "history";
 import Enzyme, { render } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
+import { useRobustParams } from "./hooks";
 
-const LandingPage = () => <div className="landing-page">Landing page</div>;
-const Home = () => <div className="home">Home</div>;
+const LandingPage = (props) => <div className="landing-page">Landing page - {props.children}</div>;
+const Home = (props) => <div className="home">Home - {props.children}</div>;
 const Books = (props) => <div className="books">Books - {props.children}</div>;
-const MyBooks = () => <div className="my-books">My books</div>;
-const BookPage = () => <div className="book-page">Book Page</div>;
-const Chat = () => <div className="chat">Chat</div>;
-const UserForumPost = () => <div className="user-forum-post">User forum - post</div>;
+const MyBooks = (props) => <div className="my-books">My books - {props.children}</div>;
+const BookPage = (props) => <div className="book-page">Book Page - {props.children}</div>;
+const Chat = (props) => <div className="chat">Chat - {props.children}</div>;
+const UserForumPost = (props) => <div className="user-forum-post">User forum - post - {props.children}</div>;
 
 describe("robust-react-router works", () => {
   beforeAll(() => Enzyme.configure({ adapter: new Adapter() }));
 
   describe("createPath", () => {
-    it("should chose right path by key - no nesting", () => {
+    it("should createPath by key - no nesting", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
           { path: "/home", key: "HOME", exact: true, component: Home },
@@ -31,9 +32,9 @@ describe("robust-react-router works", () => {
       expect(router.path("BOOKS")).toBe("/books");
     });
 
-    it("should chose right path by key - with nesting", () => {
+    it("should createPath by key - with nesting", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
           {
@@ -53,15 +54,18 @@ describe("robust-react-router works", () => {
 
     it("should createPath without params", () => {
       const history = createMemoryHistory();
-      const router = createRobust([{ path: "/books", key: "BOOKS", exact: true, component: LandingPage }] as const, {
-        history,
-      });
+      const router = createRobustRouter(
+        [{ path: "/books", key: "BOOKS", exact: true, component: LandingPage }] as const,
+        {
+          history,
+        },
+      );
       expect(router.path("BOOKS")).toBe("/books");
     });
 
     it("should createPath with param only", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/books/:id",
@@ -78,7 +82,7 @@ describe("robust-react-router works", () => {
 
     it("should createPath with search only", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/books",
@@ -96,7 +100,7 @@ describe("robust-react-router works", () => {
 
     it("should createPath with hash only", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/books",
@@ -113,7 +117,7 @@ describe("robust-react-router works", () => {
 
     it("should createPath with value, search and hash", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/chat/:id",
@@ -133,7 +137,7 @@ describe("robust-react-router works", () => {
 
     it("should createPath with value, search and hash - with nasting", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/user/:id",
@@ -159,7 +163,7 @@ describe("robust-react-router works", () => {
         ] as const,
         { history },
       );
-      // router.flattened({key: "USER_FORUM_POST_DETAIL", parent});
+
       expect(router.path("USER_PROFILE", { id: 11 })).toBe("/user/11");
       expect(router.path("USER_FORUM_POST", { id: 11 })).toBe("/user/11/forum");
       expect(router.path("USER_FORUM_POST", { id: 11 })).toBe("/user/11/forum");
@@ -169,24 +173,30 @@ describe("robust-react-router works", () => {
     });
   });
 
-  it("should pushPath", () => {
+  it("should redirect()", () => {
     const history = createMemoryHistory();
-    const router = createRobust([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const, {
-      history,
-    });
+    const router = createRobustRouter(
+      [{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const,
+      {
+        history,
+      },
+    );
     const originalHistoryLength = history.length;
-    router.pushPath("HOME");
+    router.redirect("HOME");
     expect(history.location.pathname).toBe("/home");
     expect(history.length).toBe(originalHistoryLength + 1);
   });
 
-  it("should replacePath", () => {
+  it("should replace()", () => {
     const history = createMemoryHistory();
-    const router = createRobust([{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const, {
-      history,
-    });
+    const router = createRobustRouter(
+      [{ path: "/home", key: "HOME", exact: true, component: () => <b>Home</b> }] as const,
+      {
+        history,
+      },
+    );
     const originalHistoryLength = history.length;
-    router.replacePath("HOME");
+    router.replace("HOME");
     expect(history.location.pathname).toBe("/home");
     expect(history.length).toBe(originalHistoryLength);
   });
@@ -194,7 +204,7 @@ describe("robust-react-router works", () => {
   describe("rendering and hooks", () => {
     it("should render path correctly - no nesting", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
           { path: "/home", key: "HOME", exact: true, component: Home },
@@ -212,7 +222,7 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".landing-page")).toHaveLength(1);
       expect(wrapper.find(".home")).toHaveLength(0);
 
-      router.pushPath("HOME");
+      router.redirect("HOME");
       wrapper = render(
         <RobustRouter router={router}>
           <div>
@@ -223,7 +233,7 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".landing-page")).toHaveLength(0);
       expect(wrapper.find(".home")).toHaveLength(1);
 
-      router.pushPath("LANDING_PAGE");
+      router.redirect("LANDING_PAGE");
       wrapper = render(
         <RobustRouter router={router}>
           <div>
@@ -236,13 +246,14 @@ describe("robust-react-router works", () => {
 
     it("should render path correctly - with nesting", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
           {
-            path: "/books",
+            path: "/books/:id",
             key: "BOOKS",
             component: Books,
+            options: (_: { id: number }) => null,
             routes: [{ path: "/myBooks", key: "MY_BOOKS", component: MyBooks }],
           },
         ] as const,
@@ -257,7 +268,7 @@ describe("robust-react-router works", () => {
       );
       expect(wrapper.find(".landing-page")).toHaveLength(1);
 
-      router.pushPath("BOOKS");
+      router.redirect("BOOKS", { id: 1 });
       wrapper = render(
         <RobustRouter router={router}>
           <div>
@@ -268,7 +279,7 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".books")).toHaveLength(1);
       expect(wrapper.find(".my-books")).toHaveLength(0);
 
-      router.pushPath("MY_BOOKS");
+      router.redirect("MY_BOOKS");
       wrapper = render(
         <RobustRouter router={router}>
           <div>
@@ -282,7 +293,7 @@ describe("robust-react-router works", () => {
 
     it("should render with wrapper", () => {
       const history = createMemoryHistory();
-      const router = createRobust(
+      const router = createRobustRouter(
         [
           {
             path: "/",
@@ -304,41 +315,64 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".wrapper-button")).toHaveLength(1);
     });
 
-    // it("should navigate using router from useRobustRouter()", () => {
-    //   const history = createMemoryHistory();
-    //   const router = createRobust(
-    //     [
-    //       { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
-    //       {
-    //         path: "/book/:id",
-    //         key: "BOOK_PROFILE",
-    //         exact: true,
-    //         component: () => {
-    //           const router: typeof router = useRobustRouter();
-    //           return <div className={router.routes[0].key}>Book profile</div>;
-    //         },
-    //         options: (_: { id: number }) => null,
-    //       },
-    //     ] as const,
-    //     { history },
-    //   );
-    //
-    //   router.pushPath("BOOK_PROFILE", { id: 18 });
-    //
-    //   let wrapper = render(
-    //     <RobustRouter router={router}>
-    //       <div>
-    //         <RobustSwitch router={router} />
-    //       </div>
-    //     </RobustRouter>,
-    //   );
-    //
-    //   expect(wrapper.find(".landing-page")).toHaveLength(0);
-    //   expect(wrapper.find(".LANDING_PAGE")).toHaveLength(1);
-    // });
+    it("should get params using useRobustParams()", () => {
+      const history = createMemoryHistory();
+      const router = createRobustRouter(
+        [
+          {
+            path: "/user/:id",
+            component: Chat,
+            key: "USER_PROFILE",
+            options: (_: { id: number }) => null,
+            routes: [
+              {
+                path: "/forum",
+                key: "USER_FORUM_POST",
+                component: UserForumPost,
+                routes: [
+                  {
+                    path: "/detail",
+                    key: "USER_FORUM_POST_DETAIL",
+                    component: (props) => {
+                      // Type of params should be: {m: string, hash: string} & {id: number}
+                      const params = useRobustParams(router, "USER_FORUM_POST_DETAIL");
+                      const divs: any = [];
+                      for (const i in params) {
+                        if (params.hasOwnProperty(i)) {
+                          divs.push(
+                            <div key={i} className={i}>
+                              {params[i]}
+                            </div>,
+                          );
+                        }
+                      }
+                      return <div>{divs}</div>;
+                    },
+                    options: (_: { m: string; hash: string }) => null,
+                  },
+                ],
+              },
+            ],
+          },
+        ] as const,
+        { history },
+      );
 
-    it("should render params from hook useRobustParams()", () => {
-      expect(false).toBeTruthy();
+      router.redirect("USER_FORUM_POST_DETAIL", { id: 11, m: "33", hash: "options" });
+
+      let wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router} />
+          </div>
+        </RobustRouter>,
+      );
+
+      expect(wrapper.find(".id")).toHaveLength(1);
+      expect(wrapper.find(".m")).toHaveLength(1);
+      expect(wrapper.find(".hash")).toHaveLength(1);
+
+      expect(wrapper.find(".dont-exist")).toHaveLength(0);
     });
   });
 });

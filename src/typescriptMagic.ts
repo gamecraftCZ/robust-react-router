@@ -1,11 +1,11 @@
 import React from "react";
 
-export interface Route {
+export interface RobustRoute {
   path: string;
   key: string;
   component: React.FC;
   exact?: boolean;
-  routes?: readonly Route[];
+  routes?: readonly RobustRoute[];
   options?: Function;
   wrapper?: React.FC;
   _fullPath?: string;
@@ -15,7 +15,7 @@ export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ?
 type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => any ? Parameters<O>[0] : never;
 type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K;
 
-export type RobustKeys<R extends { readonly routes: readonly Route[] }> = FlattenRoutes<R["routes"]>["key"];
+export type RobustKeys<R extends { routes: RobustRoute[] }> = FlattenRoutes<R["routes"]>["key"];
 
 type ExtractOptions<R> = R extends { options: any } ? ExtractRouteOptionsWithoutNesting<R["options"]> : never;
 

@@ -1,6 +1,6 @@
 {
   "name": "robust-react-router",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Wrapper around react-router for typesafe routing.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "watch": "nodemon -w src -e ts,tsx --exec \"npm run build\"",
+    "watch": "tsc --watch",
     "prepare": "npm run build",
     "test": "jest"
   },
@@ -20,7 +20,11 @@
   "keywords": [
     "React routing",
     "Robust router",
-    "Robust react router"
+    "Robust react router",
+    "Robust routing in react",
+    "typescript react router",
+    "react-router typescript",
+    "routing in react"
   ],
   "author": "Patrik Vácal",
   "license": "MIT",
@@ -31,6 +35,7 @@
     "@types/jest": "^25.2.1",
     "@types/path-to-regexp": "^1.7.0",
     "@types/react": "^16.9.35",
+    "@types/react-router": "^5.1.5",
     "@types/react-router-dom": "^5.1.5",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
@@ -40,6 +45,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router": "^5.2.0",
+    "react-router-dom": "^5.2.0",
     "ts-jest": "^25.5.1",
     "typescript": "^3.8.3"
   },
