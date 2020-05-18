@@ -72,7 +72,7 @@ export const RobustRouter = ({ router, children }) => {
  * @param routes
  * @param options
  */
-export const createRouter = <T extends readonly Route[]>(
+export const createRobust = <T extends readonly Route[]>(
   routes: T,
   options: { notFoundComponent?: React.FC; history: History<History.LocationState> },
 ) => {
@@ -131,8 +131,9 @@ export const createRouter = <T extends readonly Route[]>(
     history: options.history,
     notFoundComponent: options.notFoundComponent,
     routes,
-    createPath,
+    path: createPath,
     pushPath,
+    redirect: pushPath,
     replacePath,
   };
 };
