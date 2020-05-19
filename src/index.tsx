@@ -54,7 +54,9 @@ const flattenRoutes = (routes: readonly RobustRoute[], rootPath?: string): Robus
     route._fullPath = (rootPath || "") + route.path;
     flattened.push(route);
     if (route.routes) {
-      flattened.push(...flattenRoutes(route.routes, route._fullPath));
+      const subroutes = flattenRoutes(route.routes, route._fullPath);
+      subroutes.forEach((r) => (r._parent = route));
+      flattened.push(...subroutes);
     }
   }
   return flattened;
@@ -83,7 +85,7 @@ export const createRobustRouter = <T extends readonly RobustRoute[]>(
   type RoutesKeys = Routes["key"];
 
   function createPath(route: ExtractRouteWithoutOptions<Routes>["key"], params?: never): string;
-    function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
+  function createPath<Key extends RoutesKeys>(route: Key, params: ExtractRouteOptions<Routes, Key>): string;
   function createPath<Key extends RoutesKeys>(route: Key, params?: any): string {
     const routeObject = flattenedRoutes.find((r) => r.key == route);
     if (!routeObject) return "ROUTER-ERROR"; // Thanks to TypeScript, it should never get there.
@@ -140,3 +142,4 @@ export const createRobustRouter = <T extends readonly RobustRoute[]>(
 };
 
 export { RobustRoute, RobustKeys } from "./typescriptMagic";
+export { useRobustParams } from "./hooks";

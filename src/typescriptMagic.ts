@@ -9,10 +9,15 @@ export interface RobustRoute {
   options?: Function;
   wrapper?: React.FC;
   _fullPath?: string;
+  _parent?: RobustRoute;
 }
 
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
-type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => any ? Parameters<O>[0] : never;
+type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => null
+  ? Parameters<O>[0]
+  : O extends (...args: any) => any
+  ? ReturnType<O>
+  : never;
 type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K;
 
 export type RobustKeys<R extends { routes: RobustRoute[] }> = FlattenRoutes<R["routes"]>["key"];

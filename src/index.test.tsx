@@ -1,9 +1,8 @@
-import { createRobustRouter, RobustRouter, RobustSwitch } from "./index";
+import { createRobustRouter, RobustRouter, RobustSwitch, useRobustParams } from "./index";
 import React from "react";
 import { createMemoryHistory } from "history";
 import Enzyme, { render } from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
-import { useRobustParams } from "./hooks";
 
 const LandingPage = (props) => <div className="landing-page">Landing page - {props.children}</div>;
 const Home = (props) => <div className="home">Home - {props.children}</div>;
@@ -72,12 +71,12 @@ describe("robust-react-router works", () => {
             key: "BOOK_PAGE",
             exact: true,
             component: BookPage,
-            options: (_: { id: string }) => null,
+            options: ({ id }) => ({ id: parseInt(id) }),
           },
         ] as const,
         { history },
       );
-      expect(router.path("BOOK_PAGE", { id: "12345" })).toBe("/books/12345");
+      expect(router.path("BOOK_PAGE", { id: 12345 })).toBe("/books/12345");
     });
 
     it("should createPath with search only", () => {
@@ -89,8 +88,7 @@ describe("robust-react-router works", () => {
             key: "BOOK_PAGE",
             exact: true,
             component: BookPage,
-            search: { id: "" as string },
-            options: (_: { id: number }) => null,
+            options: ({ id }) => ({ id: parseInt(id) }),
           },
         ] as const,
         { history },
@@ -107,7 +105,7 @@ describe("robust-react-router works", () => {
             key: "BOOK_PAGE",
             exact: true,
             component: BookPage,
-            options: (_: { hash: string }) => null,
+            options: (_: { hash: string }) => _,
           },
         ] as const,
         { history },
@@ -124,8 +122,7 @@ describe("robust-react-router works", () => {
             key: "CHAT",
             exact: true,
             component: Chat,
-            search: { m: "" as string },
-            options: (_: { m: string; id: number; hash: string }) => null,
+            options: ({ m, id, hash }) => ({ m, id: parseInt(id), hash }),
           },
         ] as const,
         { history },
@@ -143,7 +140,7 @@ describe("robust-react-router works", () => {
             path: "/user/:id",
             component: Chat,
             key: "USER_PROFILE",
-            options: (_: { id: number }) => null,
+            options: ({ id }) => ({ id: parseInt(id) }),
             routes: [
               {
                 path: "/forum",
@@ -154,7 +151,7 @@ describe("robust-react-router works", () => {
                     path: "/detail",
                     component: Home,
                     key: "USER_FORUM_POST_DETAIL",
-                    options: (_: { m: string; hash: string }) => null,
+                    options: (_: { m: string; hash: string }) => _,
                   },
                 ],
               },
@@ -253,7 +250,6 @@ describe("robust-react-router works", () => {
             path: "/books/:id",
             key: "BOOKS",
             component: Books,
-            options: (_: { id: number }) => null,
             routes: [{ path: "/myBooks", key: "MY_BOOKS", component: MyBooks }],
           },
         ] as const,
@@ -268,7 +264,7 @@ describe("robust-react-router works", () => {
       );
       expect(wrapper.find(".landing-page")).toHaveLength(1);
 
-      router.redirect("BOOKS", { id: 1 });
+      router.redirect("BOOKS");
       wrapper = render(
         <RobustRouter router={router}>
           <div>
@@ -315,7 +311,7 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".wrapper-button")).toHaveLength(1);
     });
 
-    it("should get params using useRobustParams()", () => {
+    it("should get params with number using useRobustParams()", () => {
       const history = createMemoryHistory();
       const router = createRobustRouter(
         [
@@ -323,7 +319,7 @@ describe("robust-react-router works", () => {
             path: "/user/:id",
             component: Chat,
             key: "USER_PROFILE",
-            options: (_: { id: number }) => null,
+            options: ({ id }) => ({ id: parseInt(id) }),
             routes: [
               {
                 path: "/forum",
@@ -333,9 +329,14 @@ describe("robust-react-router works", () => {
                   {
                     path: "/detail",
                     key: "USER_FORUM_POST_DETAIL",
-                    component: (props) => {
+                    component: () => {
                       // Type of params should be: {m: string, hash: string} & {id: number}
                       const params = useRobustParams(router, "USER_FORUM_POST_DETAIL");
+                      if (typeof params.id !== "number") {
+                        console.warn("id in params not a number!");
+                        console.warn("params: ", params);
+                        return <div>No no, not a number buddy</div>;
+                      }
                       const divs: any = [];
                       for (const i in params) {
                         if (params.hasOwnProperty(i)) {
@@ -348,7 +349,7 @@ describe("robust-react-router works", () => {
                       }
                       return <div>{divs}</div>;
                     },
-                    options: (_: { m: string; hash: string }) => null,
+                    options: (_: { m: string; hash: string }) => _,
                   },
                 ],
               },
