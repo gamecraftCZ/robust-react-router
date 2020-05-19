@@ -311,7 +311,7 @@ describe("robust-react-router works", () => {
       expect(wrapper.find(".wrapper-button")).toHaveLength(1);
     });
 
-    it("should get params with number using useRobustParams()", () => {
+    it("should get params with number and optional using useRobustParams()", () => {
       const history = createMemoryHistory();
       const router = createRobustRouter(
         [
@@ -349,7 +349,12 @@ describe("robust-react-router works", () => {
                       }
                       return <div>{divs}</div>;
                     },
-                    options: (_: { m: string; hash: string }) => _,
+                    options: (_: { index?; m?: string; hash: string; num }) => ({
+                      index: parseInt(_.index),
+                      m: _.m,
+                      hash: _.hash,
+                      num: parseInt(_.num),
+                    }),
                   },
                 ],
               },
@@ -359,7 +364,7 @@ describe("robust-react-router works", () => {
         { history },
       );
 
-      router.redirect("USER_FORUM_POST_DETAIL", { id: 11, m: "33", hash: "options" });
+      router.redirect("USER_FORUM_POST_DETAIL", { id: 11, m: "33", hash: "options", num: 18 });
 
       let wrapper = render(
         <RobustRouter router={router}>

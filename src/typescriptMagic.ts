@@ -13,10 +13,16 @@ export interface RobustRoute {
 }
 
 export type ExtractRouteWithoutOptions<Route> = Route extends { options: any } ? never : Route;
+
+type ReturnTypeWithOptionalsFromArgs<O> = O extends (...args: any) => any
+  ? {
+      [P in keyof Parameters<O>[0]]: ReturnType<O>[P];
+    }
+  : never;
 type ExtractRouteOptionsWithoutNesting<O> = O extends (...args: any) => null
   ? Parameters<O>[0]
   : O extends (...args: any) => any
-  ? ReturnType<O>
+  ? ReturnTypeWithOptionalsFromArgs<O>
   : never;
 type And<T, K> = [T] extends [never] ? K : [K] extends [never] ? T : T & K;
 
