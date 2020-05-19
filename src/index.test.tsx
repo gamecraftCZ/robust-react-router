@@ -342,7 +342,7 @@ describe("robust-react-router works", () => {
                         if (params.hasOwnProperty(i)) {
                           divs.push(
                             <div key={i} className={i}>
-                              {params[i]}
+                              {params[i].toString()}
                             </div>,
                           );
                         }
