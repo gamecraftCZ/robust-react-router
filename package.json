@@ -1,7 +1,7 @@
 {
   "name": "robust-react-router",
-  "version": "0.0.15",
-  "description": "Wrapper around react-router for typesafe routing.",
+  "version": "0.0.16",
+  "description": "Typesafe router for react built on top of react-router",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

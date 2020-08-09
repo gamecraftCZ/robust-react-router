@@ -1,5 +1,5 @@
 import React from "react";
-import { generatePath, Route as ReactRoute, Router, Switch } from "react-router-dom";
+import { generatePath, Redirect, Route as ReactRoute, Router, Switch, useLocation, useParams } from "react-router-dom";
 import { ExtractRouteOptions, ExtractRouteWithoutOptions, FlattenRoutes, RobustRoute } from "./typescriptMagic";
 import { History } from "history";
 import * as pathToRegexp from "path-to-regexp";
@@ -14,13 +14,25 @@ import { stringify } from "query-string";
 
 const RouteWrapperRenderer = ({ route, children }) =>
   route.wrapper ? <route.wrapper>{children}</route.wrapper> : children;
+
+const NoWrapper = ({ children }) => <>{children}</>;
+
 /**
  * Bla, bla, bla.
  */
-function RenderRoutes({ routes, notFoundElement }: { routes?: readonly RobustRoute[]; notFoundElement?: React.FC }) {
+function RenderRoutes({
+  routes,
+  NotFoundElement,
+  WrapperElement,
+}: {
+  routes?: readonly RobustRoute[];
+  NotFoundElement?: React.FC;
+  WrapperElement?: React.FC;
+}) {
+  const Wrapper = WrapperElement || NoWrapper;
   if (!routes) return null;
   if (routes.length > 0) {
-    const key = routes.map((route) => route.key).join("");
+    const key = routes.map((route) => route.key).join("+");
     return (
       <Switch key={key}>
         {routes.map((route) => (
@@ -30,16 +42,25 @@ function RenderRoutes({ routes, notFoundElement }: { routes?: readonly RobustRou
             exact={route.exact}
             render={(props) => (
               <RouteWrapperRenderer route={route}>
-                <route.component {...props}>
-                  <RenderRoutes routes={route.routes} notFoundElement={notFoundElement} />
-                </route.component>
+                <Wrapper>
+                  <route.component {...props}>
+                    <RenderRoutes
+                      routes={route.routes}
+                      NotFoundElement={
+                        route.notFound === "stay"
+                          ? () => <RedirectToRoute route={route} />
+                          : route.notFound || NotFoundElement
+                      }
+                    />
+                  </route.component>
+                </Wrapper>
               </RouteWrapperRenderer>
             )}
           />
         ))}
         <ReactRoute
           key={`not-found-${key}`}
-          component={notFoundElement ? notFoundElement : () => <h2>Not Found!</h2>}
+          component={() => <Wrapper>{NotFoundElement ? NotFoundElement : () => <h2>Not Found!</h2>}</Wrapper>}
         />
       </Switch>
     );
@@ -47,6 +68,24 @@ function RenderRoutes({ routes, notFoundElement }: { routes?: readonly RobustRou
     return null;
   }
 }
+
+const RedirectToRoute: React.FC<{ route: RobustRoute }> = ({ route }) => {
+  const params = useParams();
+  const loc = useLocation();
+
+  console.log("RedirectToRoute, to: ", {
+    pathname: generatePath(route._fullPath || route.path, params),
+    search: loc.search,
+    hash: loc.hash,
+  });
+  return (
+    <div className="redir">
+      <Redirect
+        to={{ pathname: generatePath(route._fullPath || route.path, params), search: loc.search, hash: loc.hash }}
+      />
+    </div>
+  );
+};
 
 const flattenRoutes = (routes: readonly RobustRoute[], rootPath?: string): RobustRoute[] => {
   const flattened: RobustRoute[] = [];
@@ -63,7 +102,7 @@ const flattenRoutes = (routes: readonly RobustRoute[], rootPath?: string): Robus
 };
 
 export const RobustSwitch = ({ router }) => {
-  return <RenderRoutes routes={router._routes} notFoundElement={router._notFoundComponent} />;
+  return <RenderRoutes routes={router._routes} NotFoundElement={router._notFound} WrapperElement={router._wrapper} />;
 };
 export const RobustRouter = ({ router, children }) => {
   return <Router history={router._history}>{children}</Router>;
@@ -76,7 +115,7 @@ export const RobustRouter = ({ router, children }) => {
  */
 export const createRobustRouter = <T extends readonly RobustRoute[]>(
   routes: T,
-  options: { notFoundComponent?: React.FC; history: History<History.LocationState> },
+  options: { history: History<History.LocationState>; notFound?: React.FC; wrapper?: React.FC },
 ) => {
   const routerOptions = options;
   const flattenedRoutes = flattenRoutes(routes);
@@ -137,7 +176,8 @@ export const createRobustRouter = <T extends readonly RobustRoute[]>(
     _routes: routes,
     _flattenedRoutes: flattenedRoutes,
     _history: options.history,
-    _notFoundComponent: options.notFoundComponent,
+    _notFound: options.notFound,
+    _wrapper: options.wrapper,
   };
 };
 

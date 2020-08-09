@@ -4,6 +4,7 @@ export interface RobustRoute {
   path: string;
   key: string;
   component: React.FC;
+  notFound?: React.FC | "stay";
   exact?: boolean;
   routes?: readonly RobustRoute[];
   options?: Function;
