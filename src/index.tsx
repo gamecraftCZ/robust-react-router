@@ -60,7 +60,7 @@ function RenderRoutes({
         ))}
         <ReactRoute
           key={`not-found-${key}`}
-          component={() => <Wrapper>{NotFoundElement ? NotFoundElement : () => <h2>Not Found!</h2>}</Wrapper>}
+          component={() => <Wrapper>{NotFoundElement ? <NotFoundElement/> : <h2>Not Found!</h2>}</Wrapper>}
         />
       </Switch>
     );

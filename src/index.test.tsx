@@ -211,7 +211,7 @@ describe("robust-react-router works", () => {
       let wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -223,7 +223,7 @@ describe("robust-react-router works", () => {
       wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -234,7 +234,7 @@ describe("robust-react-router works", () => {
       wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -258,7 +258,7 @@ describe("robust-react-router works", () => {
       let wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -268,7 +268,7 @@ describe("robust-react-router works", () => {
       wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -279,13 +279,143 @@ describe("robust-react-router works", () => {
       wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
       expect(wrapper.find(".my-books")).toHaveLength(1);
       expect(wrapper.find(".books")).toHaveLength(1);
     });
+
+    it("should render global notFound component correctly", () => {
+      const history = createMemoryHistory();
+      const router = createRobustRouter(
+        [
+          { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+          {
+            path: "/books/:id",
+            key: "BOOKS",
+            component: Books,
+            routes: [{ path: "/myBooks", key: "MY_BOOKS", component: MyBooks }],
+          },
+        ] as const,
+        {
+          notFound: () => <div className="not-found">Hi</div>,
+          history,
+        },
+      );
+      let wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".landing-page")).toHaveLength(1);
+
+      router.redirect("BOOKS");
+      wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".books")).toHaveLength(1);
+      expect(wrapper.find(".my-books")).toHaveLength(0);
+
+      history.push("/jahoda-nema-zdani");
+      wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".my-books")).toHaveLength(0);
+      expect(wrapper.find(".books")).toHaveLength(0);
+      expect(wrapper.find(".not-found")).toHaveLength(1);
+    });
+
+    it("should render notFound component correctly - with nesting", () => {
+      const history = createMemoryHistory();
+      const router = createRobustRouter(
+        [
+          { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+          {
+            path: "/books/:id",
+            key: "BOOKS",
+            component: Books,
+            routes: [{ path: "/myBooks", key: "MY_BOOKS", component: MyBooks }],
+            notFound: () => <div className="not-found">Hi</div>,
+          },
+        ] as const,
+        { history },
+      );
+      let wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".landing-page")).toHaveLength(1);
+
+      router.redirect("BOOKS");
+      wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".books")).toHaveLength(1);
+      expect(wrapper.find(".my-books")).toHaveLength(0);
+
+      history.push("/books/1/nowhere/to/go?a=b#jindy");
+      wrapper = render(
+        <RobustRouter router={router}>
+          <div>
+            <RobustSwitch router={router}/>
+          </div>
+        </RobustRouter>,
+      );
+      expect(wrapper.find(".my-books")).toHaveLength(0);
+      expect(wrapper.find(".books")).toHaveLength(1);
+      expect(wrapper.find(".not-found")).toHaveLength(1);
+    });
+
+    // TODO Implement redirect to nearest valid path.
+    // it("should render notFound \"STAY\" correctly - with nesting", () => {
+    //   const history = createMemoryHistory();
+    //   const router = createRobustRouter(
+    //     [
+    //       { path: "/", key: "LANDING_PAGE", exact: true, component: LandingPage },
+    //       {
+    //         path: "/books/:id",
+    //         key: "BOOKS",
+    //         component: Books,
+    //         routes: [{ path: "/myBooks", key: "MY_BOOKS", component: MyBooks }],
+    //         notFound: "stay",
+    //       },
+    //     ] as const,
+    //     { history },
+    //   );
+    //
+    //   history.push("/books/1/nowhere/to/go?a=b#jindy");
+    //   const wrapper = render(
+    //     <RobustRouter router={router}>
+    //       <div>
+    //         <RobustSwitch router={router}/>
+    //       </div>
+    //     </RobustRouter>,
+    //   );
+    //   expect(wrapper.find(".my-books")).toHaveLength(0);
+    //   expect(wrapper.find(".books")).toHaveLength(1);
+    //   expect(history.location.pathname).toBe("/books/i");
+    //   expect(history.location.search).toBe("?a=b");
+    //   expect(history.location.hash).toBe("#jindy");
+    // });
 
     it("should render with wrapper", () => {
       const history = createMemoryHistory();
@@ -304,7 +434,7 @@ describe("robust-react-router works", () => {
       const wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
@@ -369,7 +499,7 @@ describe("robust-react-router works", () => {
       let wrapper = render(
         <RobustRouter router={router}>
           <div>
-            <RobustSwitch router={router} />
+            <RobustSwitch router={router}/>
           </div>
         </RobustRouter>,
       );
